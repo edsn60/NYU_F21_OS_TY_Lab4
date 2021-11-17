@@ -1,5 +1,4 @@
 #include <stdio.h>
-<<<<<<< HEAD
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -14,64 +13,54 @@ void print_usage_message(){
 
 
 int main(int argc, char *const argv[]) {
-    if (argc < 3 || argc > 6){
+    if (argc < 3 || argc > 6) {
         print_usage_message();
     }
-    char* disk_image_name = argv[1];
+    char *disk_image_name = argv[1];
     char *filename;
     int status;
     optind = 2;
     status = getopt(argc, argv, "ilr:R:");
-    if (status != -1){
+    if (status != -1) {
         switch (status) {
             case 105 :   // -i
-                if (argc == 3 && optind == 3){
+                if (argc == 3 && optind == 3) {
                     // TODO::
-                } else{
+                } else {
                     print_usage_message();
                 }
                 break;
             case 108:   // l
-                if (argc == 3 && optind == 3){
+                if (argc == 3 && optind == 3) {
                     // TODO::
-                } else{
+                } else {
                     print_usage_message();
                 }
                 break;
             case 114:   // r
                 filename = optarg;
-                if (optind == 4){
-                    if (argc == 4){
+                if (optind == 4) {
+                    if (argc == 4) {
                         // TODO::
-                    }
-                    else if (argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0){
+                    } else if (argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0) {
                         // TODO::
-                    }
-                    else{
+                    } else {
                         print_usage_message();
                     }
                 }
                 break;
             case 82:    // R
                 filename = optarg;
-                if (optind == 4 && argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0){
+                if (optind == 4 && argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0) {
                     // TODO::
-                }
-                else{
+                } else {
                     print_usage_message();
                 }
                 break;
             default:
                 print_usage_message();
         }
-    }
-    else{
+    } else {
         print_usage_message();
     }
-=======
-
-int main() {
-    printf("Hello, World!\n");
->>>>>>> bfe5ca30bcf59f8f4c49922fd23ef8b3d7f6b8c2
-    return 0;
 }
