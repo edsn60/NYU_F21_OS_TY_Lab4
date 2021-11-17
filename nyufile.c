@@ -1,4 +1,5 @@
 #include <stdio.h>
+<<<<<<< HEAD
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -67,5 +68,10 @@ int main(int argc, char *const argv[]) {
     else{
         print_usage_message();
     }
+=======
+
+int main() {
+    printf("Hello, World!\n");
+>>>>>>> bfe5ca30bcf59f8f4c49922fd23ef8b3d7f6b8c2
     return 0;
 }

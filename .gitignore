@@ -54,5 +54,5 @@ dkms.conf
 .idea
 CMakeLists.txt
 cmake-build-debug
-.DS_Store
+.DS_Storeq
 
