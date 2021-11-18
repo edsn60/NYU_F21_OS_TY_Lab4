@@ -5,4 +5,6 @@
 #ifndef NYUFILE_FILE_RECOVERY_H
 #define NYUFILE_FILE_RECOVERY_H
 
+void recover_file_with_name(char* filename);
+
 #endif //NYUFILE_FILE_RECOVERY_H

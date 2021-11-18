@@ -5,13 +5,17 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "fsinfo.h"
+#include "file_recovery.h"
 
 #define USAGE_MESSAGE "Usage: ./nyufile disk <options>\n-i                     Print the file system information.\n-l                     List the root directory.\n-r filename [-s sha1]  Recover a contiguous file.\n-R filename -s sha1    Recover a possibly non-contiguous file.\n"
 
 
 void *fs_image;
+BootEntry *boot_entry;
+size_t image_size;
 
 
 void print_usage_message(){
@@ -20,18 +24,23 @@ void print_usage_message(){
 }
 
 
-void map_fs_image(char *filename){
+void map_fs_image(char *disk_image_name){
     struct stat st;
-    int fd = open(filename, O_RDONLY);
+    int fd = open(disk_image_name, O_RDWR);
     if (fd == -1){
-        fprintf(stderr, "Error: %s, no such file\n", filename);
+        fprintf(stderr, "Error: %s, no such file\n", disk_image_name);
     }
     if (fstat(fd, &st) < 0) {
         fprintf(stderr, "Error: fstat error\n");
         exit(-1);
     }
-    size_t size = st.st_size;
-    fs_image = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    image_size = st.st_size;
+    fs_image = mmap(NULL, image_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    boot_entry = (BootEntry*)fs_image;
+    if (fs_image == MAP_FAILED){
+        fprintf(stderr, "Error, mmap failed: %d: %s\n", errno, strerror(errno));
+        abort();
+    }
 }
 
 
@@ -41,10 +50,11 @@ int main(int argc, char *const argv[]) {
     }
     char *disk_image_name = argv[1];
     char *filename;
+    unsigned char *sha1;
     map_fs_image(disk_image_name);
     int status;
     optind = 2;
-    status = getopt(argc, argv, "ilr:R:");
+    status = getopt(argc, argv, ":ilr:R:");
     if (status != -1) {
         switch (status) {
             case 105 :   // -i
@@ -65,9 +75,16 @@ int main(int argc, char *const argv[]) {
                 filename = optarg;
                 if (optind == 4) {
                     if (argc == 4) {
-                        // TODO::
-                    } else if (argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0) {
-                        // TODO::
+                        recover_file_with_name(filename);
+                    } else if (argc == 6) {
+                        status = getopt(argc, argv, ":s:");
+                        if (status == 115){
+                            sha1 = (unsigned char*)optarg;
+                            // TODO::
+                        }
+                        else{
+                            print_usage_message();
+                        }
                     } else {
                         print_usage_message();
                     }
@@ -75,8 +92,15 @@ int main(int argc, char *const argv[]) {
                 break;
             case 82:    // R
                 filename = optarg;
-                if (optind == 4 && argc == 6 && strcmp(argv[4], "-s") == 0 && strcmp(argv[5], "sha1") == 0) {
-                    // TODO::
+                if (optind == 4 && argc == 6) {
+                    status = getopt(argc, argv, ":s:");
+                    if (status == 115){
+                        sha1 = (unsigned char*)optarg;
+                        // TODO::
+                    }
+                    else{
+                        print_usage_message();
+                    }
                 } else {
                     print_usage_message();
                 }

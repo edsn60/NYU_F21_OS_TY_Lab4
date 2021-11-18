@@ -5,14 +5,36 @@
 #include "fsinfo.h"
 
 extern void* fs_image;
+extern BootEntry *boot_entry;
+
+
+//void locate_root_entry(){
+//    BootEntry *boot_entry = fs_image;
+//    unsigned int root_location = boot_entry->BPB_RootClus;
+//    root_location -= 2;
+//    void *root_dir_addr = fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
+//}
+
+
+unsigned int get_cluster_id(DirEntry *dir_entry){
+    unsigned int cluster_id = dir_entry->DIR_FstClusHI;
+    cluster_id = cluster_id << 16;
+    cluster_id += dir_entry->DIR_FstClusLO;
+    return cluster_id;
+}
+
+
+//unsigned int get_fat_start_addr(){
+//
+//}
 
 
 void print_fs_info(){
-    BootEntry *boot_entry = fs_image;
     printf("Number of FATs = %d\n", boot_entry->BPB_NumFATs);
     printf("Number of bytes per sector = %d\n", boot_entry->BPB_BytsPerSec);
     printf("Number of sectors per cluster = %d\n", boot_entry->BPB_SecPerClus);
     printf("Number of reserved sectors = %d\n", boot_entry->BPB_RsvdSecCnt);
+    printf("FAT size = %u sectors\n", boot_entry->BPB_FATSz32);
 }
 
 
@@ -50,15 +72,12 @@ void print_dir_info(DirEntry *dir_entry){
             printf("%c", c);
         }
     }
-    unsigned int start_cluster = dir_entry->DIR_FstClusHI;
-    start_cluster = start_cluster << 16;
-    start_cluster += dir_entry->DIR_FstClusLO;
+    unsigned int start_cluster = get_cluster_id(dir_entry);
     printf("/ (size = 0, starting cluster = %d)\n", start_cluster);
 }
 
 
 void list_root_dir(){
-    BootEntry *boot_entry = fs_image;
     unsigned int root_location = boot_entry->BPB_RootClus;
     root_location -= 2;
     void *root_dir_addr = fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
