@@ -16,6 +16,13 @@ extern BootEntry *boot_entry;
 //}
 
 
+void *get_root_dir_addr(){
+    unsigned int root_location = boot_entry->BPB_RootClus;
+    root_location -= 2;
+    return fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
+}
+
+
 unsigned int get_cluster_id(DirEntry *dir_entry){
     unsigned int cluster_id = dir_entry->DIR_FstClusHI;
     cluster_id = cluster_id << 16;

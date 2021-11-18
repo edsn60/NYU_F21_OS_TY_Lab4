@@ -80,7 +80,7 @@ int main(int argc, char *const argv[]) {
                         status = getopt(argc, argv, ":s:");
                         if (status == 115){
                             sha1 = (unsigned char*)optarg;
-                            // TODO::
+                            recover_file_with_sha1(filename, sha1);
                         }
                         else{
                             print_usage_message();
