@@ -31,11 +31,6 @@ unsigned int get_cluster_id(DirEntry *dir_entry){
 }
 
 
-//unsigned int get_fat_start_addr(){
-//
-//}
-
-
 void print_fs_info(){
     printf("Number of FATs = %d\n", boot_entry->BPB_NumFATs);
     printf("Number of bytes per sector = %d\n", boot_entry->BPB_BytsPerSec);

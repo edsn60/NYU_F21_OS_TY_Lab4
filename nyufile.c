@@ -50,7 +50,7 @@ int main(int argc, char *const argv[]) {
     }
     char *disk_image_name = argv[1];
     char *filename;
-    unsigned char *sha1;
+    char *sha1;
     map_fs_image(disk_image_name);
     int status;
     optind = 2;
@@ -79,7 +79,7 @@ int main(int argc, char *const argv[]) {
                     } else if (argc == 6) {
                         status = getopt(argc, argv, ":s:");
                         if (status == 115){
-                            sha1 = (unsigned char*)optarg;
+                            sha1 = optarg;
                             recover_file_with_sha1(filename, sha1);
                         }
                         else{
@@ -95,8 +95,8 @@ int main(int argc, char *const argv[]) {
                 if (optind == 4 && argc == 6) {
                     status = getopt(argc, argv, ":s:");
                     if (status == 115){
-                        sha1 = (unsigned char*)optarg;
-                        // TODO::
+                        sha1 = optarg;
+                        recover_non_contiguous_file_with_sha1(filename, sha1);
                     }
                     else{
                         print_usage_message();
