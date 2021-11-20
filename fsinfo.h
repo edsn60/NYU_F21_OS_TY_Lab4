@@ -56,5 +56,6 @@ typedef struct DirEntry {
 void print_fs_info();
 void list_root_dir();
 unsigned int get_cluster_id(DirEntry *dir_entry);
-void *get_root_dir_addr();
+void *get_data_start_addr();
+unsigned int *get_root_clusters();
 #endif //NYUFILE_FSINFO_H
