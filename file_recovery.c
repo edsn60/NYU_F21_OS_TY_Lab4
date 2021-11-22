@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <openssl/sha.h>
-#include "file_recovery.h"
 #include "fsinfo.h"
 #include "fat_manipulate.h"
 
@@ -20,7 +19,7 @@ extern size_t image_size;
 DirEntry *locate_entry(unsigned char dirname[11], char *filename){
     unsigned int *root_clusters = get_root_clusters();
     unsigned int cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
-    void *data_start_addr = get_data_start_addr();
+    unsigned char *data_start_addr = get_data_start_addr();
     size_t max_entries_num = boot_entry->BPB_BytsPerSec / sizeof(DirEntry) * boot_entry->BPB_SecPerClus;
     int deleted_file_count = 0;
     DirEntry *target;
@@ -78,10 +77,7 @@ void recover_contiguous_fat(DirEntry *dir_entry){
 
     unsigned int *fat_addr = get_fat_start_addr();
     for (unsigned int i = 0; i < fat_num; i++) {
-        printf("sizeof void*: %lu\n", sizeof(void*));
-        printf("sizeof unsigned int: %lu\n", sizeof(unsigned int*));
         unsigned int *file_start_cluster_in_fat = fat_addr + i * fat_size / sizeof(unsigned int);
-        printf("%p\n", file_start_cluster_in_fat);
         file_start_cluster_in_fat += file_start_cluster;
         unsigned int tmp_file_start_cluster = file_start_cluster;
         unsigned int tmp_file_size = file_size;
@@ -123,7 +119,7 @@ DirEntry *compare_sha1_for_contiguous_file(DirEntry *dir_entry, char *target_sha
     unsigned int file_start_cluster_id = get_cluster_id(dir_entry);
     size_t file_size = dir_entry->DIR_FileSize;
 
-    void *data_start_addr = get_data_start_addr();
+    char *data_start_addr = get_data_start_addr();
     char *file_start_addr = data_start_addr + (file_start_cluster_id - 2) * boot_entry->BPB_SecPerClus * boot_entry->BPB_BytsPerSec;
 
     char *file_sha1 = compute_sha1(file_start_addr, file_size);
@@ -142,7 +138,7 @@ void recover_file_with_sha1(char *filename, char* sha1){
     deleted_dirname[0] = 0xe5;
     unsigned int *root_clusters = get_root_clusters();
     unsigned int cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
-    void *data_start_addr = get_data_start_addr();
+    unsigned char *data_start_addr = get_data_start_addr();
     size_t max_entries_num = boot_entry->BPB_BytsPerSec / sizeof(DirEntry) * boot_entry->BPB_SecPerClus;
     unsigned int *root_cluster = root_clusters;
     while (*root_cluster != 0) {
@@ -165,14 +161,14 @@ void recover_file_with_sha1(char *filename, char* sha1){
 }
 
 
-char *get_file_sha1_by_clusters(unsigned int *clusters, size_t cluster_num, size_t file_size){
-    void *data_start_addr = get_data_start_addr();
+char *get_file_sha1_by_clusters(const unsigned int *clusters, size_t cluster_num, size_t file_size){
+    unsigned char *data_start_addr = get_data_start_addr();
     unsigned int cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
     unsigned char md[SHA_DIGEST_LENGTH] = {'\0'};
     SHA_CTX ctx;
     SHA1_Init(&ctx);
     char *file_content = (char*) malloc(sizeof(char) * file_size);
-    int copy = 0;
+    unsigned int copy = 0;
     for (size_t i = 0; i < cluster_num - 1; i++){
         strncat(file_content, (char*)data_start_addr + (clusters[i] - 2) * cluster_size, cluster_size);
         copy += cluster_size;
@@ -180,9 +176,7 @@ char *get_file_sha1_by_clusters(unsigned int *clusters, size_t cluster_num, size
         file_size -= cluster_size;
     }
     strncat(file_content, (char*)data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, cluster_size);
-    if (clusters[0] == 7 && clusters[1] == 9 && clusters[2] == 8){
-        printf("%s\n", file_content);
-    }
+
     SHA1_Update(&ctx, data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, file_size);
     SHA1_Final(md, &ctx);
 
@@ -195,18 +189,10 @@ char *get_file_sha1_by_clusters(unsigned int *clusters, size_t cluster_num, size
 
 
 int find_element_in_array(const unsigned int *clusters, unsigned int cluster_num, unsigned int target){
-    for (int i = 0; i < cluster_num; i++){
+    for (unsigned int i = 0; i < cluster_num; i++){
         if (*(clusters+i) == target){
             return 1;
         }
-    }
-    return 0;
-}
-
-
-int print_array(unsigned int *array, unsigned int size){
-    if (array[0] == 7 && array[1] == 9 && array[2] == 8){
-        return 1;
     }
     return 0;
 }
@@ -217,9 +203,6 @@ unsigned int *brute_force_search(unsigned int *all_clusters, unsigned int *searc
         return NULL;
     }
     if (remain == 0){
-        if (print_array(searched_clusters, cluster_num)){
-            printf("");
-        }
         char *file_sha1 = get_file_sha1_by_clusters(searched_clusters, cluster_num, file_size);
         if (memcmp(target_sha1, file_sha1, SHA_DIGEST_LENGTH * 2) == 0){
             return searched_clusters;
@@ -228,7 +211,7 @@ unsigned int *brute_force_search(unsigned int *all_clusters, unsigned int *searc
             return NULL;
         }
     }
-    unsigned int *fat_addr = (unsigned int*)(fs_image + boot_entry->BPB_RsvdSecCnt * boot_entry->BPB_BytsPerSec);
+    unsigned int *fat_addr = (unsigned int*)fs_image + (boot_entry->BPB_RsvdSecCnt * boot_entry->BPB_BytsPerSec) / sizeof(unsigned int);
     unsigned int *searched_res;
     for (unsigned int i = 0; i <= end; i++){
         if (*(fat_addr + all_clusters[i]) == 0 && !find_element_in_array(searched_clusters, cluster_num-remain, all_clusters[i])){
@@ -248,7 +231,7 @@ void recover_non_contiguous_file_with_sha1(char* filename, char *sha1){
     unsigned char* deleted_dirname = (unsigned char*)reformat_deleted_dirname(filename);
     deleted_dirname[0] = 0xe5;
     unsigned int *root_clusters = get_root_clusters();
-    void *data_start_addr = get_data_start_addr();
+    char *data_start_addr = get_data_start_addr();
     size_t max_entries_num = boot_entry->BPB_BytsPerSec / sizeof(DirEntry) * boot_entry->BPB_SecPerClus;
     size_t cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
     unsigned int all_clusters[12] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};

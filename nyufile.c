@@ -48,67 +48,80 @@ int main(int argc, char *const argv[]) {
     if (argc < 3 || argc > 6) {
         print_usage_message();
     }
-    char *disk_image_name = argv[1];
+    unsigned char arg_mask = 0b00000;
+
     char *filename;
     char *sha1;
-    map_fs_image(disk_image_name);
+
     int status;
-    optind = 2;
-    status = getopt(argc, argv, ":ilr:R:");
-    if (status != -1) {
+
+    while ((status = getopt(argc, argv, ":ilr:R:s:")) != -1){
         switch (status) {
-            case 105 :   // -i
-                if (argc == 3 && optind == 3) {
-                    print_fs_info();
-                } else {
+            case 105:   // i
+                if ((arg_mask | 0b00001) == arg_mask){
                     print_usage_message();
+                    exit(-1);
                 }
+                arg_mask |= 0b00001;
                 break;
             case 108:   // l
-                if (argc == 3 && optind == 3) {
-                    list_root_dir();
-                } else {
+                if ((arg_mask | 0b00010) == arg_mask){
                     print_usage_message();
+                    exit(-1);
                 }
+                arg_mask |= 0b00010;
                 break;
             case 114:   // r
-                filename = optarg;
-                if (optind == 4) {
-                    if (argc == 4) {
-                        recover_file_with_name(filename);
-                    } else if (argc == 6) {
-                        status = getopt(argc, argv, ":s:");
-                        if (status == 115){
-                            sha1 = optarg;
-                            recover_file_with_sha1(filename, sha1);
-                        }
-                        else{
-                            print_usage_message();
-                        }
-                    } else {
-                        print_usage_message();
-                    }
+                if ((arg_mask | 0b00100) == arg_mask){
+                    print_usage_message();
+                    exit(-1);
                 }
+                filename = optarg;
+                arg_mask |= 0b00100;
                 break;
             case 82:    // R
-                filename = optarg;
-                if (optind == 4 && argc == 6) {
-                    status = getopt(argc, argv, ":s:");
-                    if (status == 115){
-                        sha1 = optarg;
-                        recover_non_contiguous_file_with_sha1(filename, sha1);
-                    }
-                    else{
-                        print_usage_message();
-                    }
-                } else {
+                if ((arg_mask | 0b01000) == arg_mask){
                     print_usage_message();
+                    exit(-1);
                 }
+                filename = optarg;
+                arg_mask |= 0b01000;
+                break;
+            case 115:   // s
+                if ((arg_mask | 0b10000) == arg_mask){
+                    print_usage_message();
+                    exit(-1);
+                }
+                sha1 = optarg;
+                arg_mask |= 0b10000;
                 break;
             default:
                 print_usage_message();
         }
-    } else {
+    }
+    if (!argv[optind]){
         print_usage_message();
+    }
+    char *disk_image_name = argv[optind];
+    map_fs_image(disk_image_name);
+
+    switch (arg_mask) {
+        case 0b00001:   // -i
+            print_fs_info();
+            break;
+        case 0b00010:   // -l
+            list_root_dir();
+            break;
+        case 0b00100:   // -r
+            recover_file_with_name(filename);
+            break;
+        case 0b10100:   // -r -s
+            recover_file_with_sha1(filename, sha1);
+            break;
+        case 0b11000:   // -R -s
+            recover_non_contiguous_file_with_sha1(filename, sha1);
+            break;
+        default:
+            print_usage_message();
     }
 }

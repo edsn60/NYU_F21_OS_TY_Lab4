@@ -1,22 +1,20 @@
 CC=gcc
-CFLAGS=-g -pedantic -std=gnu17 -Wall -Werror -Wextra -lcrypto
+CFLAGS=-g -pedantic -std=gnu11 -Wall -Werror -Wextra -lcrypto
 
 .PHONY: all
-all: nyuenc
+all: nyufile
 
-nyuenc: nyuenc.o execution.o encoder.o thread_pool.o task_manager.o
+nyufile: nyufile.o fsinfo.o file_recovery.o fat_manipulate.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
-nyuenc.o: nyuenc.c thread_pool.h execution.h
+nyufile.o: nyufile.c fsinfo.h file_recovery.h
 
-execution.o: execution.c thread_pool.h execution.h encoder.h task_manager.h
+fsinfo.o: fsinfo.c fsinfo.h fat_manipulate.h
 
-task_manager.o: task_manager.c task_manager.h
+file_recovery.o: file_recovery.c fsinfo.h fat_manipulate.h
 
-threadpool.o: thread_pool.c thread_pool.h task_manager.h execution.h
-
-encoder.o: encoder.c
+fat_manipulate.o: fat_manipulate.c fsinfo.h
 
 .PHONY: clean
 clean:
-	rm -f *.o nyuenc
+	rm -f *.o nyufile

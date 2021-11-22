@@ -30,7 +30,7 @@ unsigned int *get_root_clusters(){
 void *get_data_start_addr(){
     unsigned int root_location = boot_entry->BPB_RootClus;
     root_location -= 2;
-    return fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
+    return (unsigned char*)fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
 }
 
 
@@ -93,7 +93,7 @@ void print_dir_info(DirEntry *dir_entry){
 void list_root_dir(){
     unsigned int *root_clusters = get_root_clusters();
     unsigned int cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
-    void *data_start_addr = get_data_start_addr();
+    unsigned char *data_start_addr = get_data_start_addr();
     size_t max_entries_num = boot_entry->BPB_BytsPerSec / sizeof(DirEntry) * boot_entry->BPB_SecPerClus;
     size_t actual_entries_num = 0;
     unsigned int *root_cluster = root_clusters;

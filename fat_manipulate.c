@@ -2,7 +2,6 @@
 // Created by ysw on 11/17/21.
 //
 #include <stdio.h>
-#include "fat_manipulate.h"
 #include "fsinfo.h"
 
 
@@ -10,7 +9,7 @@ extern void* fs_image;
 extern BootEntry *boot_entry;
 
 unsigned int *get_fat_start_addr(){
-    return (unsigned int*)(fs_image + boot_entry->BPB_RsvdSecCnt * boot_entry->BPB_BytsPerSec);
+    return (unsigned int*)fs_image + (boot_entry->BPB_RsvdSecCnt * boot_entry->BPB_BytsPerSec) / sizeof(unsigned int);
 }
 
 
