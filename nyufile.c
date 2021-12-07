@@ -10,7 +10,7 @@
 #include "fsinfo.h"
 #include "file_recovery.h"
 
-#define USAGE_MESSAGE "Usage: ./nyufile disk <options>\n-i                     Print the file system information.\n-l                     List the root directory.\n-r filename [-s sha1]  Recover a contiguous file.\n-R filename -s sha1    Recover a possibly non-contiguous file.\n"
+#define USAGE_MESSAGE "Usage: ./nyufile disk <options>\n  -i                     Print the file system information.\n  -l                     List the root directory.\n  -r filename [-s sha1]  Recover a contiguous file.\n  -R filename -s sha1    Recover a possibly non-contiguous file.\n"
 
 
 void *fs_image;
@@ -60,21 +60,18 @@ int main(int argc, char *const argv[]) {
             case 105:   // i
                 if ((arg_mask | 0b00001) == arg_mask){
                     print_usage_message();
-                    exit(-1);
                 }
                 arg_mask |= 0b00001;
                 break;
             case 108:   // l
                 if ((arg_mask | 0b00010) == arg_mask){
                     print_usage_message();
-                    exit(-1);
                 }
                 arg_mask |= 0b00010;
                 break;
             case 114:   // r
                 if ((arg_mask | 0b00100) == arg_mask){
                     print_usage_message();
-                    exit(-1);
                 }
                 filename = optarg;
                 arg_mask |= 0b00100;
@@ -82,7 +79,6 @@ int main(int argc, char *const argv[]) {
             case 82:    // R
                 if ((arg_mask | 0b01000) == arg_mask){
                     print_usage_message();
-                    exit(-1);
                 }
                 filename = optarg;
                 arg_mask |= 0b01000;
@@ -90,7 +86,6 @@ int main(int argc, char *const argv[]) {
             case 115:   // s
                 if ((arg_mask | 0b10000) == arg_mask){
                     print_usage_message();
-                    exit(-1);
                 }
                 sha1 = optarg;
                 arg_mask |= 0b10000;
@@ -99,7 +94,7 @@ int main(int argc, char *const argv[]) {
                 print_usage_message();
         }
     }
-    if (!argv[optind]){
+    if (!argv[optind] || argv[optind+1]){
         print_usage_message();
     }
     char *disk_image_name = argv[optind];

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -pedantic -std=gnu11 -Wall -Werror -Wextra -lcrypto
+CFLAGS=-g -std=gnu11 -Wall -Werror -Wextra -lcrypto
 
 .PHONY: all
 all: nyufile

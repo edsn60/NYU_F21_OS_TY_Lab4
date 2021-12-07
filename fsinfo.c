@@ -28,9 +28,7 @@ unsigned int *get_root_clusters(){
 
 
 void *get_data_start_addr(){
-    unsigned int root_location = boot_entry->BPB_RootClus;
-    root_location -= 2;
-    return (unsigned char*)fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32 + root_location * boot_entry->BPB_SecPerClus) * boot_entry->BPB_BytsPerSec;
+    return (unsigned char*)fs_image + (boot_entry->BPB_RsvdSecCnt + boot_entry->BPB_NumFATs * boot_entry->BPB_FATSz32) * boot_entry->BPB_BytsPerSec;
 }
 
 
@@ -47,7 +45,6 @@ void print_fs_info(){
     printf("Number of bytes per sector = %d\n", boot_entry->BPB_BytsPerSec);
     printf("Number of sectors per cluster = %d\n", boot_entry->BPB_SecPerClus);
     printf("Number of reserved sectors = %d\n", boot_entry->BPB_RsvdSecCnt);
-    printf("FAT size = %u sectors\n", boot_entry->BPB_FATSz32);
 }
 
 

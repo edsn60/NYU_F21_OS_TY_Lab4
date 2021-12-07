@@ -167,23 +167,24 @@ char *get_file_sha1_by_clusters(const unsigned int *clusters, size_t cluster_num
     unsigned char md[SHA_DIGEST_LENGTH] = {'\0'};
     SHA_CTX ctx;
     SHA1_Init(&ctx);
-    char *file_content = (char*) malloc(sizeof(char) * file_size);
-    unsigned int copy = 0;
+    char *file_content = (char*) malloc(sizeof(char) * (file_size));
+    memset(file_content, '\0', sizeof(char) * (file_size));
     for (size_t i = 0; i < cluster_num - 1; i++){
         strncat(file_content, (char*)data_start_addr + (clusters[i] - 2) * cluster_size, cluster_size);
-        copy += cluster_size;
-        SHA1_Update(&ctx, data_start_addr + (clusters[i] - 2) * cluster_size, cluster_size);
+        SHA1_Update(&ctx, (char*)data_start_addr + (clusters[i] - 2) * cluster_size, cluster_size);
         file_size -= cluster_size;
     }
-    strncat(file_content, (char*)data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, cluster_size);
+    strncat(file_content, (char*)data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, file_size);
 
-    SHA1_Update(&ctx, data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, file_size);
+    SHA1_Update(&ctx, (char*)data_start_addr + (clusters[cluster_num - 1] - 2) * cluster_size, file_size);
     SHA1_Final(md, &ctx);
 
-    char *file_sha1 = (char*) malloc(sizeof(char) * SHA_DIGEST_LENGTH * 2);
+    char *file_sha1 = (char*) malloc(sizeof(char) * (SHA_DIGEST_LENGTH * 2 + 1));
+    memset(file_sha1, 0, sizeof(char) * (SHA_DIGEST_LENGTH * 2 + 1));
     for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
         sprintf(&file_sha1[i*2], "%02x", (unsigned int)md[i]);
     }
+    free(file_content);
     return file_sha1;
 }
 
@@ -210,6 +211,7 @@ unsigned int *brute_force_search(unsigned int *all_clusters, unsigned int *searc
         else{
             return NULL;
         }
+
     }
     unsigned int *fat_addr = (unsigned int*)fs_image + (boot_entry->BPB_RsvdSecCnt * boot_entry->BPB_BytsPerSec) / sizeof(unsigned int);
     unsigned int *searched_res;
@@ -226,7 +228,6 @@ unsigned int *brute_force_search(unsigned int *all_clusters, unsigned int *searc
 }
 
 
-
 void recover_non_contiguous_file_with_sha1(char* filename, char *sha1){
     unsigned char* deleted_dirname = (unsigned char*)reformat_deleted_dirname(filename);
     deleted_dirname[0] = 0xe5;
@@ -234,7 +235,7 @@ void recover_non_contiguous_file_with_sha1(char* filename, char *sha1){
     char *data_start_addr = get_data_start_addr();
     size_t max_entries_num = boot_entry->BPB_BytsPerSec / sizeof(DirEntry) * boot_entry->BPB_SecPerClus;
     size_t cluster_size = boot_entry->BPB_BytsPerSec * boot_entry->BPB_SecPerClus;
-    unsigned int all_clusters[12] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    unsigned int all_clusters[12] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
     unsigned int *root_cluster = root_clusters;
     while (*root_cluster != 0) {
         DirEntry *dir_entry = (DirEntry*) (data_start_addr + (*root_cluster - 2) * cluster_size);
